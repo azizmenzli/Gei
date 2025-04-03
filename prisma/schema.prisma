@@ -1,0 +1,260 @@
+// This is your Prisma schema file
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------
+// Activity Domain
+// ----------------------
+model Activity {
+  activity_id Int      @id @default(autoincrement())
+  name        String   @unique
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  users      User[]
+  categories Category[]
+  products   Product[]
+  orders     Order[]
+  discounts  Discount[]
+  brands     Brand[]
+}
+
+// ----------------------
+// RBAC Models
+// ----------------------
+model Role {
+  role_id     Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  // Relations
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  permission_id Int     @id @default(autoincrement())
+  name          String  @unique
+  description   String?
+
+  // Relations
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  role_id       Int
+  permission_id Int
+
+  role       Role       @relation(fields: [role_id], references: [role_id])
+  permission Permission @relation(fields: [permission_id], references: [permission_id])
+
+  @@id([role_id, permission_id])
+}
+
+model User {
+  user_id       Int      @id @default(autoincrement())
+  activity_id   Int
+  email         String   @unique
+  password_hash String
+  first_name    String
+  last_name     String
+  company       String? // Optional field for B2B context
+  active        Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  activity  Activity   @relation(fields: [activity_id], references: [activity_id])
+  userRoles UserRole[]
+  orders    Order[]
+
+  @@index([activity_id])
+}
+
+model UserRole {
+  user_id Int
+  role_id Int
+
+  user User @relation(fields: [user_id], references: [user_id])
+  role Role @relation(fields: [role_id], references: [role_id])
+
+  @@id([user_id, role_id])
+}
+
+// ----------------------
+// Brands
+// ----------------------
+model Brand {
+  brand_id    Int      @id @default(autoincrement())
+  activity_id Int
+  name        String   @unique
+  description String?
+  logo        String? // URL or path to the brand logo
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  activity   Activity   @relation(fields: [activity_id], references: [activity_id])
+  products   Product[]
+  categories Category[]
+  discounts  Discount[]
+
+  @@index([activity_id])
+}
+
+// ----------------------
+// Category with Nested Set Model
+// ----------------------
+model Category {
+  category_id        Int      @id @default(autoincrement())
+  activity_id        Int
+  name               String
+  parent_category_id Int?
+  nleft              Int
+  nright             Int
+  brand_id           Int? // Optional: A category can have a brand
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relations
+  activity       Activity          @relation(fields: [activity_id], references: [activity_id])
+  brand          Brand?            @relation(fields: [brand_id], references: [brand_id])
+  parentCategory Category?         @relation("Subcategories", fields: [parent_category_id], references: [category_id])
+  subcategories  Category[]        @relation("Subcategories")
+  products       ProductCategory[]
+
+  @@unique([activity_id, name])
+  @@index([activity_id])
+  @@index([nleft])
+  @@index([nright])
+  @@index([brand_id])
+}
+
+// ----------------------
+// Products and Variants
+// ----------------------
+model Product {
+  product_id     Int      @id @default(autoincrement())
+  activity_id    Int
+  name           String
+  description    String?
+  price          Decimal  @db.Decimal(10, 2)
+  sku            String
+  stock_quantity Int      @default(0) // Tracks stock
+  active         Boolean  @default(true)
+  brand_id       Int? // Optional: Not all products need a brand
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // Relations
+  activity          Activity          @relation(fields: [activity_id], references: [activity_id])
+  brand             Brand?            @relation(fields: [brand_id], references: [brand_id])
+  productCategories ProductCategory[]
+  orderItems        OrderItem[]
+  variants          ProductVariant[]
+  discounts         ProductDiscount[] // Relation to discounts
+
+  @@unique([activity_id, sku])
+  @@index([activity_id])
+  @@index([brand_id])
+}
+
+model ProductCategory {
+  product_id  Int
+  category_id Int
+
+  product  Product  @relation(fields: [product_id], references: [product_id])
+  category Category @relation(fields: [category_id], references: [category_id])
+
+  @@id([product_id, category_id])
+}
+
+model ProductVariant {
+  variant_id     Int      @id @default(autoincrement())
+  product_id     Int
+  name           String?
+  price_modifier Decimal? @db.Decimal(10, 2)
+  stock_quantity Int      @default(0) // Variant-specific stock
+
+  product Product @relation(fields: [product_id], references: [product_id])
+}
+
+// ----------------------
+// Discounts
+// ----------------------
+model Discount {
+  discount_id Int          @id @default(autoincrement())
+  activity_id Int
+  name        String
+  description String?
+  type        DiscountType // Enum for discount type (e.g., PRODUCT, CATEGORY, ORDER)
+  value       Decimal      @db.Decimal(10, 2) // Percentage or fixed amount
+  brand_id    Int? // Optional: Brand-specific discounts
+  active      Boolean      @default(true)
+  start_date  DateTime
+  end_date    DateTime?
+
+  // Relations
+  activity         Activity          @relation(fields: [activity_id], references: [activity_id])
+  brand            Brand?            @relation(fields: [brand_id], references: [brand_id])
+  productDiscounts ProductDiscount[]
+
+  @@index([activity_id])
+}
+
+model ProductDiscount {
+  product_id  Int
+  discount_id Int
+
+  product  Product  @relation(fields: [product_id], references: [product_id])
+  discount Discount @relation(fields: [discount_id], references: [discount_id])
+
+  @@id([product_id, discount_id])
+}
+
+enum DiscountType {
+  PRODUCT
+  CATEGORY
+  ORDER
+}
+
+// ----------------------
+// Orders and Order Items
+// ----------------------
+model Order {
+  order_id        Int      @id @default(autoincrement())
+  activity_id     Int
+  user_id         Int
+  total_amount    Decimal  @db.Decimal(10, 2)
+  discount_amount Decimal  @default(0) @db.Decimal(10, 2) // Amount discounted
+  status          String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  activity Activity    @relation(fields: [activity_id], references: [activity_id])
+  user     User        @relation(fields: [user_id], references: [user_id])
+  items    OrderItem[]
+
+  @@index([activity_id])
+}
+
+model OrderItem {
+  order_id   Int
+  product_id Int
+  quantity   Int
+  unit_price Decimal  @db.Decimal(10, 2)
+  created_at DateTime @default(now()) // Timestamp when the item was added
+
+  order   Order   @relation(fields: [order_id], references: [order_id])
+  product Product @relation(fields: [product_id], references: [product_id])
+
+  @@id([order_id, product_id])
+}
