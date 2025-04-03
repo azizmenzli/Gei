@@ -1,99 +1,181 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Project Architecture & Technical Documentation
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Overview
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This document describes the architecture, technology stack, and design decisions for our new B2B e-commerce platform. Our goals are:
 
-## Description
+- **High Performance and Scalability:**  
+  Achieve fast data retrieval, quick page loads, and support for increasing traffic volumes.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **SEO-Friendly Frontend:**  
+  Ensure search engines can easily crawl and index content by leveraging Server-Side Rendering (SSR) with Next.js.
 
-## Project setup
+- **Maintainable and Modular Codebase:**  
+  Utilize best-in-class frameworks, typed schemas, and modular architecture to ensure long-term maintainability and scalability.
 
-```bash
-$ yarn install
-```
+## Technology Stack
 
-## Compile and run the project
+### Backend
 
-```bash
-# development
-$ yarn run start
+- **NestJS:** A progressive Node.js framework with strong modular architecture and TypeScript support.
+- **Prisma:** A type-safe ORM for seamless database interaction and auto-generated TypeScript types.
+- **PostgreSQL:** A robust, SQL-compliant relational database for persistent data storage.
+- **Redis:** An in-memory data store for caching frequently accessed data, improving read performance.
+- **Apollo Server (NestJS Integration):** For GraphQL queries (read operations), allowing flexible and efficient data fetching.
+- **REST Endpoints (NestJS Controllers):** For write operations (create/update/delete), maintaining simplicity.
 
-# watch mode
-$ yarn run start:dev
+**Key Backend Libraries & Modules**:
+- **@nestjs/graphql:** Integration with Apollo Server for GraphQL.
+- **@nestjs/passport & passport-jwt:** For JWT-based authentication and authorization.
+- **class-validator & class-transformer:** For input validation and data transformation in REST endpoints.
+- **NestJS Config Module:** For environment-based configuration management.
+- **Swagger (via @nestjs/swagger):** For automatic REST API documentation generation.
+- **Passport:** To manage authentication strategies, including JWT and potential RBAC.
+- **Chart.js (via CDN or Node package) for data visualization (optional in backend for reporting APIs)**
 
-# production mode
-$ yarn run start:prod
-```
+### Frontend
 
-## Run tests
+- **Next.js:** A React-based framework enabling SSR and SSG for improved initial load times, SEO benefits, and dynamic routing.
+- **React:** The UI library for building dynamic, component-based interfaces.
+- **Apollo Client (optional for GraphQL Reads):** If the frontend queries GraphQL directly from the browser, Apollo Client can manage requests and caching.
+- **TypeScript:** Ensures type safety and better developer productivity.
+- **Tailwind CSS:** A utility-first CSS framework for rapid, responsive design.
+- **Ant Design (antd) Components:** Pre-built, themeable UI components for building consistent and user-friendly UIs.
+- **Chart.js (CDN or local)**: For rendering interactive charts and graphs on the frontend.
+- **Cloudinary or self-hosted Nextcloud:** For media storage and delivery (images, videos). Cloudinary offers CDN-like performance; Nextcloud can be self-hosted for more control.
 
-```bash
-# unit tests
-$ yarn run test
+**Key Frontend Libraries**:
+- **axios or fetch:** For calling REST endpoints for writes if needed.
+- **SWR or React Query (optional):** For client-side data fetching and caching if we complement SSR with client-side updates.
+- **Styled Components or Tailwind CSS (chosen: Tailwind)**: For styling. Using Tailwind plus Ant Design for a comprehensive design system.
 
-# e2e tests
-$ yarn run test:e2e
+## API Layers
 
-# test coverage
-$ yarn run test:cov
-```
+- **GraphQL (Read Operations):**  
+  Allows clients (Next.js SSR processes) to fetch exactly the required data. Reduces over-fetching and improves performance.
 
-## Deployment
+- **REST (Write Operations):**  
+  Retains simplicity for mutations (create, update, delete). REST endpoints are easy to document with Swagger and integrate with existing tooling.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Architectural Diagram
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
-```bash
-$ yarn install -g mau
-$ mau deploy
-```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+             ┌─────────────────────┐
+             │       Frontend      │
+             │       Next.js       │
+             │     (SSR/SSG + UI)  │
+             └───────┬────────────┘
+                     │
+                     ▼ (GraphQL & REST requests)
+             ┌─────────────────────┐
+             │       Backend       │
+             │       NestJS        │
+             │ (Apollo & REST APIs)│
+             │ Swagger for Docs    │
+             └───────┬─────┬──────┘
+                     │     │
+                     │     │ (Cache checks)
+                     │     ▼
+              ┌──────┴─────┐
+              │    Redis    │   <--- In-memory cache for quick reads
+              │    Cache    │
+              └──────┬─────┘
+                     │ (On cache miss)
+                     ▼
+    ┌───────────────────────┐        ┌───────────┐
+    │      PostgreSQL       │<-----> │  Prisma   │
+    │      Database         │        │  Client   │
+    └───────────────────────┘        └───────────┘
 
-## Resources
 
-Check out a few resources that may come in handy when working with NestJS:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
 
-## Support
+   
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-## Stay in touch
+**Flow Explanation**:
+- The frontend (Next.js) requests data via GraphQL from NestJS.
+- NestJS checks Redis for cached results (fast retrieval on cache hits).
+- On cache miss, NestJS uses Prisma to query PostgreSQL, caches the result in Redis, and returns the data.
+- For write operations, the frontend calls NestJS REST endpoints, which update the database and invalidate/update Redis cache entries as needed.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Data Flow
 
-## License
+### Read Operations (GraphQL):
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+1. Next.js SSR requests data from the GraphQL endpoint in NestJS.
+2. NestJS checks Redis. On a hit, it returns cached data instantly.
+3. On a miss, NestJS queries PostgreSQL via Prisma.
+4. Results are cached in Redis and returned to Next.js. Next.js then renders a fully formed HTML page, aiding SEO and performance.
+
+### Write Operations (REST):
+
+1. The frontend calls REST endpoints for create/update/delete actions.
+2. NestJS updates the PostgreSQL database using Prisma.
+3. After a write, NestJS invalidates or updates related Redis cache entries to keep reads consistent.
+4. Subsequent reads see updated data from cache or re-fetch from the database.
+
+## Key Benefits
+
+- **Performance:**  
+  Redis caching, SSR, and optional Dataloader usage ensure fast page loads and efficient data retrieval.
+  
+- **Scalability:**  
+  Horizontal scaling with multiple NestJS instances behind a load balancer. Redis as a central cache. Kubernetes for orchestration and scaling containerized services.
+
+- **SEO Optimization:**  
+  SSR from Next.js ensures search engines index pre-rendered HTML.
+
+- **Maintainability:**  
+  Clear separation of GraphQL (reads) and REST (writes), plus a shared service layer in NestJS avoids logic duplication. Swagger docs help maintain API clarity.
+
+- **Type Safety & Productivity:**  
+  TypeScript throughout ensures a consistent, predictable codebase, reducing runtime errors and improving developer experience.
+
+## Security & Authentication
+
+- **JWT-based Authentication:**  
+  Using `@nestjs/passport` and `passport-jwt` for secure token-based authentication. On login, JWT issued to client (e.g., HttpOnly cookie). Subsequent requests include JWT for server-side verification.
+
+- **Authorization & RBAC:**  
+  NestJS guards and Passport strategies enforce role-based access control. GraphQL resolvers and REST handlers check roles/permissions before returning or modifying data.
+
+- **Validation & Sanitization:**  
+  `class-validator` and `class-transformer` ensure input data integrity, preventing injection attacks and improving API robustness.
+
+## DevOps & CI/CD
+
+- **Containerization with Docker:**  
+  Both backend (NestJS) and frontend (Next.js) are packaged into Docker images, ensuring environment consistency.
+  
+- **Kubernetes for Orchestration:**  
+  Deploy containers to a Kubernetes cluster for easy scaling, rolling updates, and resilience.
+  
+- **CI/CD with GitHub Actions:**  
+  - Automated tests, linting, and type checks run on every commit.
+  - On successful builds, changes are deployed to staging, then production after approval.
+  
+- **Monitoring & Logging:**
+  - **Portainer:** For managing Docker containers and images, providing a UI to handle container lifecycle.
+  - **Grafana + Prometheus/ELK Stack:** Monitor application metrics, logs, and performance. Grafana visualizes metrics, Prometheus scrapes metrics, and the ELK stack (Elasticsearch, Logstash, Kibana) can handle logs.
+  
+- **Analytics & User Behavior Insights:**
+  - For website traffic analysis and user interaction insights, integrate free or open-source tools:
+    - **Matomo (self-hosted)** or **Plausible Analytics**: Privacy-friendly analytics for tracking visitors, page views, and conversions.
+    - **Hotjar (limited free)** or **Microsoft Clarity (free)**: For heatmaps, session recordings, and user behavior insights to identify main focus areas of the website.
+  
+- **Caching Strategy in CI/CD:**
+  - On schema or model changes, run Prisma migrations before restarting containers.
+  - Flush or selectively invalidate Redis cache to prevent stale data post-deployment.
+
+## Media Handling
+
+- **Cloudinary or Nextcloud:**
+  - Cloudinary for CDN-like performance and on-the-fly image transformations.
+  - Nextcloud if self-hosting media is preferred for compliance or cost reasons.
+  - Either integrated with the backend APIs, ensuring product images or user-uploaded media can be served quickly and reliably.
+
+## Conclusion
+
+This architecture combining NestJS, Next.js, Prisma, Redis, and PostgreSQL—delivers a high-performance, SEO-friendly B2B e-commerce platform. With Tailwind CSS, Ant Design components, and Chart.js, we provide a rich, interactive frontend experience. Authentication and authorization via JWT and Passport ensure secure access. Swagger improves API documentation clarity. Docker and Kubernetes enhance scalability and reliability, while GitHub Actions streamline CI/CD. Monitoring with Portainer, Grafana, and privacy-friendly analytics tools give actionable insights into system health and user behavior, driving continuous improvements and a robust future-proof platform.
